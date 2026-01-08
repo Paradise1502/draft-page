@@ -1,12 +1,13 @@
 import os
-from flask import Flask, jsonify, request, send_from_directory
+import json
+from flask import Flask, jsonify, request, render_template_string
 
-app = Flask(__name__, static_folder='.')
+app = Flask(__name__)
 
-# The live state of your draft (stored in memory)
+# The live state of your draft
 state = {"teamA": [], "teamB": []}
 
-# REAL DATA FROM YOUR CSV
+# REAL DATA
 PLAYERS = [
     {"name": "Visjes x Untouch", "merits": 51456263, "highest_power": 171680945, "units_killed": 1735428852, "units_dead": 3763848, "units_healed": 786250054},
     {"name": "Paradise 㞧", "merits": 43237712, "highest_power": 160850254, "units_killed": 1007341529, "units_dead": 5338698, "units_healed": 509946382},
@@ -36,31 +37,124 @@ PLAYERS = [
     {"name": "Marky Mark 㞧", "merits": 12333098, "highest_power": 158829474, "units_killed": 944360343, "units_dead": 4275556, "units_healed": 529601779}
 ]
 
+HTML_CONTENT = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Live Merit Draft</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #0f172a; color: white; } .card { border: 1px solid #334155; transition: 0.2s; } .card:hover { border-color: #f97316; }</style>
+</head>
+<body class="p-4">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8 pb-4 border-b border-slate-700">
+            <h1 class="text-3xl font-bold text-orange-500">MERIT RACE DRAFT</h1>
+            <button onclick="resetDraft()" class="text-xs text-red-400 border border-red-500/30 px-2 py-1 rounded">Reset</button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+            <div class="space-y-6">
+                <div class="bg-slate-800 p-4 rounded-xl border-t-4 border-blue-500">
+                    <div class="flex justify-between mb-4"><h3 class="font-bold text-blue-400">Team Alpha</h3><span id="scoreA" class="font-mono">0</span></div>
+                    <div id="listA" class="space-y-1 text-xs"></div>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border-t-4 border-red-500">
+                    <div class="flex justify-between mb-4"><h3 class="font-bold text-red-400">Team Bravo</h3><span id="scoreB" class="font-mono">0</span></div>
+                    <div id="listB" class="space-y-1 text-xs"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const players = {{ players_json | safe }};
+        let state = { teamA: [], teamB: [] };
+
+        async function sync() {
+            const res = await fetch('/api/state');
+            state = await res.json();
+            render();
+        }
+
+        async function draft(idx, team) {
+            await fetch('/api/draft', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: idx, team: team})
+            });
+            sync();
+        }
+
+        async function resetDraft() {
+            if(confirm("Reset all?")) { await fetch('/api/reset', {method: 'POST'}); sync(); }
+        }
+
+        function render() {
+            const grid = document.getElementById('grid');
+            const listA = document.getElementById('listA');
+            const listB = document.getElementById('listB');
+            grid.innerHTML = ''; listA.innerHTML = ''; listB.innerHTML = '';
+            let sA = 0, sB = 0;
+
+            players.forEach((p, i) => {
+                const inA = state.teamA.includes(i);
+                const inB = state.teamB.includes(i);
+                if (!inA && !inB) {
+                    const div = document.createElement('div');
+                    div.className = 'card bg-slate-800 p-4 rounded-lg shadow-lg';
+                    div.innerHTML = `
+                        <div class="flex justify-between mb-2"><span class="font-bold text-orange-400 text-sm">${p.name}</span><span class="text-[10px] text-slate-500">${(p.highest_power/1000000).toFixed(1)}M</span></div>
+                        <div class="grid grid-cols-2 text-[10px] text-slate-400 mb-3">
+                            <div>Merits: <span class="text-white">${p.merits.toLocaleString()}</span></div>
+                            <div>Kills: <span class="text-white">${p.units_killed.toLocaleString()}</span></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="draft(${i}, 'A')" class="flex-1 bg-blue-600 text-[10px] py-1 rounded">Alpha</button>
+                            <button onclick="draft(${i}, 'B')" class="flex-1 bg-red-600 text-[10px] py-1 rounded">Bravo</button>
+                        </div>
+                    `;
+                    grid.appendChild(div);
+                } else {
+                    const target = inA ? listA : listB;
+                    if (inA) sA += p.merits; else sB += p.merits;
+                    target.innerHTML += `<div class="flex justify-between border-b border-slate-700/50 py-1"><span>${p.name}</span><span>${p.merits.toLocaleString()}</span></div>`;
+                }
+            });
+            document.getElementById('scoreA').innerText = sA.toLocaleString();
+            document.getElementById('scoreB').innerText = sB.toLocaleString();
+        }
+        setInterval(sync, 2000);
+        sync();
+    </script>
+</body>
+</html>
+"""
+
 @app.route('/')
-def serve_index():
-    return send_from_directory('.', 'index.html')
+def index():
+    return render_template_string(HTML_CONTENT, players_json=json.dumps(PLAYERS))
 
 @app.route('/api/state')
 def get_state():
     return jsonify(state)
 
 @app.route('/api/draft', methods=['POST'])
-def draft_player():
+def draft():
     data = request.json
-    player_idx = data.get('index')
-    team = data.get('team')
-    if player_idx not in state['teamA'] and player_idx not in state['teamB']:
-        if team == 'A': state['teamA'].append(player_idx)
-        else: state['teamB'].append(player_idx)
+    idx, team = data.get('index'), data.get('team')
+    if idx not in state['teamA'] and idx not in state['teamB']:
+        if team == 'A': state['teamA'].append(idx)
+        else: state['teamB'].append(idx)
     return jsonify({"success": True})
 
 @app.route('/api/reset', methods=['POST'])
 def reset():
-    state['teamA'] = []
-    state['teamB'] = []
+    state['teamA'], state['teamB'] = [], []
     return jsonify({"success": True})
 
 if __name__ == '__main__':
-    # RAILWAY FIX: Use os.environ.get('PORT') and host='0.0.0.0'
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
