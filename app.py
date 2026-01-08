@@ -7,7 +7,7 @@ app = Flask(__name__)
 # The live state of your draft
 state = {"teamA": [], "teamB": []}
 
-# REAL DATA
+# REAL DATA FROM YOUR CSV
 PLAYERS = [
     {"name": "Visjes x Untouch", "merits": 51456263, "highest_power": 171680945, "units_killed": 1735428852, "units_dead": 3763848, "units_healed": 786250054},
     {"name": "Paradise 㞧", "merits": 43237712, "highest_power": 160850254, "units_killed": 1007341529, "units_dead": 5338698, "units_healed": 509946382},
@@ -41,63 +41,75 @@ HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Live CoD Merit Draft</title>
+    <meta charset="UTF-8"><title>Live CoD Scouting Room</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; }
-        .card { border: 1px solid #334155; transition: 0.2s; background: #1e293b; }
-        .card:hover { border-color: #f97316; transform: translateY(-2px); }
-        .stat-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .stat-value { font-weight: bold; font-size: 11px; }
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .card { border: 1px solid #334155; transition: 0.2s; background: #1e293b; position: relative; overflow: hidden; }
+        .card:hover { border-color: #f97316; transform: translateY(-3px); }
+        .stat-grid { background: rgba(15, 23, 42, 0.4); border-radius: 8px; padding: 10px; }
+        .sort-btn { font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; transition: 0.2s; }
+        .sort-btn:hover { border-color: #f97316; color: #f97316; }
+        .sort-btn.active { background: #f97316; border-color: #f97316; color: white; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10">
     <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-8 pb-4 border-b border-slate-700">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-slate-700 gap-6">
             <div>
-                <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">MERIT RACE DRAFT</h1>
-                <p class="text-slate-400 text-sm">Season 8 Live Scouting Board</p>
+                <h1 class="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">SCOUTING ROOM</h1>
+                <p class="text-slate-400 font-medium">Live Drafting Portal | Merit Race Season 8</p>
             </div>
-            <button onclick="resetDraft()" class="bg-red-900/20 hover:bg-red-900/40 border border-red-500/50 px-4 py-2 rounded-lg text-xs font-bold transition">RESET DRAFT</button>
+            <button onclick="resetDraft()" class="bg-red-600/10 hover:bg-red-600/40 border border-red-500/50 px-6 py-2 rounded-xl text-xs font-black transition tracking-widest uppercase">Reset Draft</button>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
             <div class="lg:col-span-8">
-                <h2 class="text-xl font-bold mb-4 text-green-400 flex items-center gap-2">
-                    AVAILABLE PLAYERS (<span id="count">0</span>)
-                </h2>
-                <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-black text-green-400 uppercase tracking-wide italic">Available Pool (<span id="count">0</span>)</h2>
+                    <div class="flex gap-2 items-center">
+                        <span class="text-[10px] uppercase text-slate-500 font-bold mr-2">Sort By:</span>
+                        <button onclick="changeSort('merits')" id="btn-merits" class="sort-btn active">MERITS</button>
+                        <button onclick="changeSort('highest_power')" id="btn-power" class="sort-btn">POWER</button>
+                        <button onclick="changeSort('units_killed')" id="btn-killed" class="sort-btn">KILLS</button>
+                        <button onclick="changeSort('units_healed')" id="btn-healed" class="sort-btn">HEALS</button>
+                    </div>
+                </div>
+                
+                <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </div>
 
-            <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-800 p-5 rounded-xl border-t-4 border-blue-500 shadow-xl">
-                    <div class="flex justify-between items-end mb-4">
-                        <h3 class="text-xl font-bold text-blue-400 uppercase">Team Alpha</h3>
+            <div class="lg:col-span-4 space-y-8">
+                <div class="bg-slate-800 p-6 rounded-2xl border-t-8 border-blue-500 shadow-2xl">
+                    <div class="flex justify-between items-end mb-6">
+                        <h3 class="text-2xl font-black text-blue-400 uppercase italic">Team Alpha</h3>
                         <div class="text-right">
-                            <span class="stat-label block text-[9px]">Total Merits</span>
-                            <span id="scoreA" class="text-lg font-mono font-bold text-white">0</span>
+                            <span class="text-[9px] uppercase text-slate-400 font-bold block">Team Merits</span>
+                            <span id="scoreA" class="text-2xl font-mono font-black text-white">0</span>
                         </div>
                     </div>
-                    <div id="listA" class="space-y-1 border-t border-slate-700 pt-3"></div>
+                    <div id="listA" class="space-y-2 border-t border-slate-700 pt-4"></div>
                 </div>
 
-                <div class="bg-slate-800 p-5 rounded-xl border-t-4 border-red-500 shadow-xl">
-                    <div class="flex justify-between items-end mb-4">
-                        <h3 class="text-xl font-bold text-red-400 uppercase">Team Bravo</h3>
+                <div class="bg-slate-800 p-6 rounded-2xl border-t-8 border-red-500 shadow-2xl">
+                    <div class="flex justify-between items-end mb-6">
+                        <h3 class="text-2xl font-black text-red-400 uppercase italic">Team Bravo</h3>
                         <div class="text-right">
-                            <span class="stat-label block text-[9px]">Total Merits</span>
-                            <span id="scoreB" class="text-lg font-mono font-bold text-white">0</span>
+                            <span class="text-[9px] uppercase text-slate-400 font-bold block">Team Merits</span>
+                            <span id="scoreB" class="text-2xl font-mono font-black text-white">0</span>
                         </div>
                     </div>
-                    <div id="listB" class="space-y-1 border-t border-slate-700 pt-3"></div>
+                    <div id="listB" class="space-y-2 border-t border-slate-700 pt-4"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const players = {{ players_json | safe }};
+        const rawPlayers = {{ players_json | safe }};
+        let playersWithId = rawPlayers.map((p, i) => ({...p, originalIndex: i}));
         let state = { teamA: [], teamB: [] };
+        let currentSort = 'merits';
 
         async function sync() {
             try {
@@ -116,8 +128,15 @@ HTML_CONTENT = """
             sync();
         }
 
+        function changeSort(key) {
+            currentSort = key;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + (key === 'highest_power' ? 'power' : key === 'units_killed' ? 'killed' : key === 'units_healed' ? 'healed' : 'merits')).classList.add('active');
+            render();
+        }
+
         async function resetDraft() {
-            if(confirm("Are you sure? This clears all picks for everyone.")) {
+            if(confirm("Wipe all draft data for everyone?")) {
                 await fetch('/api/reset', {method: 'POST'});
                 sync();
             }
@@ -128,30 +147,52 @@ HTML_CONTENT = """
             const listA = document.getElementById('listA');
             const listB = document.getElementById('listB');
             grid.innerHTML = ''; listA.innerHTML = ''; listB.innerHTML = '';
+            
             let sA = 0, sB = 0, count = 0;
+            
+            // Sort logic
+            const sorted = [...playersWithId].sort((a, b) => b[currentSort] - a[currentSort]);
 
-            players.forEach((p, i) => {
-                const inA = state.teamA.includes(i);
-                const inB = state.teamB.includes(i);
+            sorted.forEach((p) => {
+                const inA = state.teamA.includes(p.originalIndex);
+                const inB = state.teamB.includes(p.originalIndex);
                 
                 if (!inA && !inB) {
                     count++;
                     const div = document.createElement('div');
-                    div.className = 'card p-4 rounded-lg shadow-lg';
+                    div.className = 'card p-5 rounded-xl shadow-xl';
                     div.innerHTML = `
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="font-bold text-orange-400 text-sm truncate w-40" title="${p.name}">${p.name}</span>
-                            <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">PWR: ${p.highest_power.toLocaleString()}</span>
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-black text-white text-lg truncate w-44 tracking-tight">${p.name}</span>
+                            <div class="text-right">
+                                <span class="block text-[10px] text-slate-500 font-bold uppercase tracking-widest">Merits</span>
+                                <span class="text-xl font-black text-orange-500 font-mono">${p.merits.toLocaleString()}</span>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
-                            <div><p class="stat-label">Merits</p><p class="stat-value text-white">${p.merits.toLocaleString()}</p></div>
-                            <div><p class="stat-label">Units Killed</p><p class="stat-value text-red-400">${p.units_killed.toLocaleString()}</p></div>
-                            <div><p class="stat-label">Units Healed</p><p class="stat-value text-green-400">${p.units_healed.toLocaleString()}</p></div>
-                            <div><p class="stat-label">Units Dead</p><p class="stat-value text-slate-100">${p.units_dead.toLocaleString()}</p></div>
+                        
+                        <div class="mb-5">
+                             <span class="text-[10px] font-bold text-slate-500 tracking-tighter uppercase">Power Score:</span>
+                             <span class="text-xs font-bold text-slate-300 ml-1 font-mono">${p.highest_power.toLocaleString()}</span>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="draft(${i}, 'A')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-[10px] font-bold py-1.5 rounded transition uppercase">Alpha</button>
-                            <button onclick="draft(${i}, 'B')" class="flex-1 bg-red-600 hover:bg-red-500 text-[10px] font-bold py-1.5 rounded transition uppercase">Bravo</button>
+
+                        <div class="stat-grid grid grid-cols-3 gap-2 mb-6">
+                            <div class="text-center">
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">Kills</p>
+                                <p class="text-[11px] font-black text-red-400 font-mono">${(p.units_killed/1000000).toFixed(1)}M</p>
+                            </div>
+                            <div class="text-center border-x border-slate-700/50">
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">Heals</p>
+                                <p class="text-[11px] font-black text-green-400 font-mono">${(p.units_healed/1000000).toFixed(1)}M</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">Dead</p>
+                                <p class="text-[11px] font-black text-slate-200 font-mono">${(p.units_dead/1000000).toFixed(1)}M</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="draft(${p.originalIndex}, 'A')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-[11px] font-black py-2 rounded-lg transition uppercase tracking-widest">Draft Alpha</button>
+                            <button onclick="draft(${p.originalIndex}, 'B')" class="flex-1 bg-red-600 hover:bg-red-500 text-[11px] font-black py-2 rounded-lg transition uppercase tracking-widest">Draft Bravo</button>
                         </div>
                     `;
                     grid.appendChild(div);
@@ -159,9 +200,9 @@ HTML_CONTENT = """
                     const target = inA ? listA : listB;
                     if (inA) sA += p.merits; else sB += p.merits;
                     target.innerHTML += `
-                        <div class="flex justify-between items-center text-[11px] py-1.5 border-b border-slate-700/50">
-                            <span class="font-medium text-slate-200">${p.name}</span>
-                            <span class="font-mono text-slate-400">${p.merits.toLocaleString()}</span>
+                        <div class="flex justify-between items-center text-[12px] py-2 border-b border-slate-700/30">
+                            <span class="font-bold text-slate-300">${p.name}</span>
+                            <span class="font-mono font-bold text-slate-500">${p.merits.toLocaleString()}</span>
                         </div>`;
                 }
             });
