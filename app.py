@@ -69,7 +69,7 @@ HTML_CONTENT = """
         
         <header class="flex flex-col lg:flex-row justify-between items-start mb-8 pb-6 border-b border-slate-700 gap-6">
             <div class="flex-1">
-                <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 tracking-tighter uppercase">Scouting Portal</h1>
+                <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 tracking-tighter uppercase">Broken Crown Merit Race - Draft</h1>
                 <div id="turnIndicator" class="mt-2 text-sm font-bold px-4 py-2 rounded uppercase tracking-widest border border-slate-700 shadow-lg">
                     Loading...
                 </div>
@@ -354,4 +354,5 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
 
