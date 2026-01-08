@@ -1,26 +1,24 @@
-let localState = { teamA: [], teamB: [] };
-const players = [ /* Insert the same player list here */ ];
+<script>
+    const players = [ /* Your player list goes here */ ];
+    let localState = { teamA: [], teamB: [] };
 
-async function updateFromServer() {
-    const res = await fetch('/api/state');
-    localState = await res.json();
-    render();
-}
+    // This function asks the server "Who has been picked?" every 2 seconds
+    async function updateFromServer() {
+        const res = await fetch('/api/state');
+        localState = await res.json();
+        render(); // This redraws the screen with the new data
+    }
 
-async function draft(i, team) {
-    await fetch('/api/draft', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({index: i, team: team})
-    });
-    updateFromServer();
-}
+    // This function tells the server "I am picking this player"
+    async function draft(i, team) {
+        await fetch('/api/draft', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({index: i, team: team})
+        });
+        updateFromServer();
+    }
 
-async function resetDraft() {
-    await fetch('/api/reset', {method: 'POST'});
-    updateFromServer();
-}
-
-// Update the screen every 2 seconds automatically
-setInterval(updateFromServer, 2000);
-updateFromServer();
+    setInterval(updateFromServer, 2000); // Auto-sync every 2 seconds
+    updateFromServer(); // Initial load
+</script>
