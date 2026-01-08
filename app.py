@@ -209,7 +209,7 @@ HTML_CONTENT = """
                 const div = document.createElement('div');
                 div.className = 'card p-4 rounded-xl shadow-lg text-center';
                 div.innerHTML = `
-                    <div class="mb-1 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Merit Value</div>
+                    <div class="mb-1 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Merits last Season</div>
                     <div class="text-2xl font-black text-orange-400 font-mono mb-2 tracking-tighter">${p.merits.toLocaleString()}</div>
                     <div class="font-bold text-white text-base mb-4 uppercase tracking-tight border-b border-slate-700 pb-2">${p.name}</div>
                     
@@ -354,5 +354,6 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
