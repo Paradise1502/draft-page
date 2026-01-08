@@ -5,9 +5,15 @@ from flask import Flask, jsonify, request, render_template_string
 app = Flask(__name__)
 
 # The live state of your draft
-state = {"teamA": [], "teamB": []}
+state = {
+    "teamA": [], 
+    "teamB": [], 
+    "history": [],
+    "teamNames": {"A": "Team Alpha", "B": "Team Bravo"},
+    "turn": 0 # 0, 1, 2, 3... used to calculate snake turn
+}
 
-# REAL DATA FROM YOUR CSV
+# REAL DATA
 PLAYERS = [
     {"name": "Visjes x Untouch", "merits": 51456263, "highest_power": 171680945, "units_killed": 1735428852, "units_dead": 3763848, "units_healed": 786250054},
     {"name": "Paradise 㞧", "merits": 43237712, "highest_power": 160850254, "units_killed": 1007341529, "units_dead": 5338698, "units_healed": 509946382},
@@ -41,82 +47,98 @@ HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Live CoD Scouting Room</title>
+    <meta charset="UTF-8"><title>Pro Merit Draft Room</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .card { border: 1px solid #334155; transition: 0.2s; background: #1e293b; position: relative; overflow: hidden; }
-        .card:hover { border-color: #f97316; transform: translateY(-3px); }
-        .stat-grid { background: rgba(15, 23, 42, 0.4); border-radius: 8px; padding: 10px; }
-        .sort-btn { font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; transition: 0.2s; }
-        .sort-btn:hover { border-color: #f97316; color: #f97316; }
-        .sort-btn.active { background: #f97316; border-color: #f97316; color: white; }
+        .card { border: 1px solid #334155; transition: 0.2s; background: #1e293b; }
+        .card.active-turn { border-color: #f97316; box-shadow: 0 0 15px rgba(249, 115, 22, 0.2); }
+        .btn-draft:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+        .history-item { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .comparison-bar { height: 8px; border-radius: 4px; transition: width 0.5s ease-in-out; }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-4 md:p-8">
     <div class="max-w-7xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-slate-700 gap-6">
+        
+        <header class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 pb-6 border-b border-slate-700">
             <div>
-                <h1 class="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">SCOUTING ROOM</h1>
-                <p class="text-slate-400 font-medium">Live Drafting Portal | Merit Race Season 8</p>
+                <h1 class="text-3xl font-black text-orange-500 tracking-tighter">DRAFT ROOM</h1>
+                <div id="turnIndicator" class="mt-2 text-sm font-bold px-3 py-1 rounded bg-slate-800 inline-block border border-orange-500/50">
+                    LOADING TURN...
+                </div>
             </div>
-            <button onclick="resetDraft()" class="bg-red-600/10 hover:bg-red-600/40 border border-red-500/50 px-6 py-2 rounded-xl text-xs font-black transition tracking-widest uppercase">Reset Draft</button>
+            <div class="flex flex-col gap-2">
+                <input type="text" id="nameA" onchange="updateNames()" placeholder="Team A Name" class="bg-slate-900 border border-blue-500/30 px-3 py-1 rounded text-sm focus:border-blue-500 outline-none">
+                <input type="text" id="nameB" onchange="updateNames()" placeholder="Team B Name" class="bg-slate-900 border border-red-500/30 px-3 py-1 rounded text-sm focus:border-red-500 outline-none">
+            </div>
+            <div class="text-right">
+                <button onclick="resetDraft()" class="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-widest">Reset All Data</button>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div class="lg:col-span-8">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-black text-green-400 uppercase tracking-wide italic">Available Pool (<span id="count">0</span>)</h2>
-                    <div class="flex gap-2 items-center">
-                        <span class="text-[10px] uppercase text-slate-500 font-bold mr-2">Sort By:</span>
-                        <button onclick="changeSort('merits')" id="btn-merits" class="sort-btn active">MERITS</button>
-                        <button onclick="changeSort('highest_power')" id="btn-power" class="sort-btn">POWER</button>
-                        <button onclick="changeSort('units_killed')" id="btn-killed" class="sort-btn">KILLS</button>
-                        <button onclick="changeSort('units_healed')" id="btn-healed" class="sort-btn">HEALS</button>
-                    </div>
-                </div>
-                
-                <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-            </div>
-
-            <div class="lg:col-span-4 space-y-8">
-                <div class="bg-slate-800 p-6 rounded-2xl border-t-8 border-blue-500 shadow-2xl">
-                    <div class="flex justify-between items-end mb-6">
-                        <h3 class="text-2xl font-black text-blue-400 uppercase italic">Team Alpha</h3>
-                        <div class="text-right">
-                            <span class="text-[9px] uppercase text-slate-400 font-bold block">Team Merits</span>
-                            <span id="scoreA" class="text-2xl font-mono font-black text-white">0</span>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-3 space-y-6">
+                <div class="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Team Comparison</h3>
+                    <div id="comparison" class="space-y-4">
                         </div>
-                    </div>
-                    <div id="listA" class="space-y-2 border-t border-slate-700 pt-4"></div>
                 </div>
 
-                <div class="bg-slate-800 p-6 rounded-2xl border-t-8 border-red-500 shadow-2xl">
-                    <div class="flex justify-between items-end mb-6">
-                        <h3 class="text-2xl font-black text-red-400 uppercase italic">Team Bravo</h3>
-                        <div class="text-right">
-                            <span class="text-[9px] uppercase text-slate-400 font-bold block">Team Merits</span>
-                            <span id="scoreB" class="text-2xl font-mono font-black text-white">0</span>
+                <div class="bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-700">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Draft History</h3>
+                    <div id="historyList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 text-[11px]">
                         </div>
-                    </div>
-                    <div id="listB" class="space-y-2 border-t border-slate-700 pt-4"></div>
                 </div>
             </div>
+
+            <div class="lg:col-span-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold italic text-green-400 uppercase">Available (<span id="count">0</span>)</h2>
+                    <select id="sortSelect" onchange="render()" class="bg-slate-800 text-[10px] border border-slate-600 rounded px-2 py-1 outline-none">
+                        <option value="merits">Sort: Merits</option>
+                        <option value="highest_power">Sort: Power</option>
+                        <option value="units_killed">Sort: Kills</option>
+                        <option value="units_healed">Sort: Heals</option>
+                    </select>
+                </div>
+                <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div class="lg:col-span-3 space-y-6">
+                <div class="bg-slate-800 p-5 rounded-xl border-t-4 border-blue-500 shadow-xl">
+                    <h3 id="labelA" class="text-lg font-black text-blue-400 uppercase mb-1">TEAM ALPHA</h3>
+                    <span id="scoreA" class="text-xl font-mono font-bold">0</span>
+                    <div id="listA" class="mt-4 space-y-1 text-[11px] border-t border-slate-700 pt-3"></div>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-xl border-t-4 border-red-500 shadow-xl">
+                    <h3 id="labelB" class="text-lg font-black text-red-400 uppercase mb-1">TEAM BRAVO</h3>
+                    <span id="scoreB" class="text-xl font-mono font-bold">0</span>
+                    <div id="listB" class="mt-4 space-y-1 text-[11px] border-t border-slate-700 pt-3"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        const rawPlayers = {{ players_json | safe }};
-        let playersWithId = rawPlayers.map((p, i) => ({...p, originalIndex: i}));
-        let state = { teamA: [], teamB: [] };
-        let currentSort = 'merits';
+        const players = {{ players_json | safe }};
+        let state = { teamA: [], teamB: [], turn: 0, history: [], teamNames: {A: "Alpha", B: "Bravo"} };
+
+        // SNAKE LOGIC: A, B, B, A, A, B, B, A...
+        function getWhoseTurn(turnCount) {
+            const pattern = [0, 1, 1, 0]; 
+            return pattern[turnCount % 4] === 0 ? 'A' : 'B';
+        }
 
         async function sync() {
-            try {
-                const res = await fetch('/api/state');
-                state = await res.json();
-                render();
-            } catch (e) { console.error("Sync failed"); }
+            const res = await fetch('/api/state');
+            state = await res.json();
+            document.getElementById('nameA').value = state.teamNames.A;
+            document.getElementById('nameB').value = state.teamNames.B;
+            render();
         }
 
         async function draft(idx, team) {
@@ -128,88 +150,109 @@ HTML_CONTENT = """
             sync();
         }
 
-        function changeSort(key) {
-            currentSort = key;
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + (key === 'highest_power' ? 'power' : key === 'units_killed' ? 'killed' : key === 'units_healed' ? 'healed' : 'merits')).classList.add('active');
-            render();
+        async function updateNames() {
+            const nA = document.getElementById('nameA').value || "Alpha";
+            const nB = document.getElementById('nameB').value || "Bravo";
+            await fetch('/api/names', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({A: nA, B: nB})
+            });
+            sync();
         }
 
         async function resetDraft() {
-            if(confirm("Wipe all draft data for everyone?")) {
-                await fetch('/api/reset', {method: 'POST'});
-                sync();
-            }
+            if(confirm("Reset everything?")) { await fetch('/api/reset', {method: 'POST'}); sync(); }
         }
 
         function render() {
             const grid = document.getElementById('grid');
             const listA = document.getElementById('listA');
             const listB = document.getElementById('listB');
-            grid.innerHTML = ''; listA.innerHTML = ''; listB.innerHTML = '';
-            
+            const hist = document.getElementById('historyList');
+            const currentTeam = getWhoseTurn(state.turn);
+            const currentName = state.teamNames[currentTeam];
+
+            // Turn Indicator
+            const indicator = document.getElementById('turnIndicator');
+            indicator.innerText = `NEXT PICK: ${currentName}`;
+            indicator.className = `mt-2 text-sm font-bold px-3 py-1 rounded bg-slate-800 inline-block border ${currentTeam === 'A' ? 'border-blue-500 text-blue-400' : 'border-red-500 text-red-400'}`;
+
+            // Reset UI
+            grid.innerHTML = ''; listA.innerHTML = ''; listB.innerHTML = ''; hist.innerHTML = '';
+            document.getElementById('labelA').innerText = state.teamNames.A;
+            document.getElementById('labelB').innerText = state.teamNames.B;
+
             let sA = 0, sB = 0, count = 0;
-            
-            // Sort logic
-            const sorted = [...playersWithId].sort((a, b) => b[currentSort] - a[currentSort]);
+            let totalsA = {killed: 0, healed: 0}, totalsB = {killed: 0, healed: 0};
+
+            // Draft History
+            state.history.forEach(item => {
+                hist.innerHTML = `<div class="history-item p-2 border-b border-slate-700/50">
+                    <span class="${item.team === 'A' ? 'text-blue-400' : 'text-red-400'} font-bold">${state.teamNames[item.team]}</span> 
+                    picked <span class="text-white">${item.player}</span>
+                </div>` + hist.innerHTML;
+            });
+
+            // Sort & Render Players
+            const sortKey = document.getElementById('sortSelect').value;
+            const sorted = players.map((p, i) => ({...p, id: i}))
+                                 .sort((a, b) => b[sortKey] - a[sortKey]);
 
             sorted.forEach((p) => {
-                const inA = state.teamA.includes(p.originalIndex);
-                const inB = state.teamB.includes(p.originalIndex);
-                
+                const inA = state.teamA.includes(p.id);
+                const inB = state.teamB.includes(p.id);
                 if (!inA && !inB) {
                     count++;
                     const div = document.createElement('div');
-                    div.className = 'card p-5 rounded-xl shadow-xl';
+                    div.className = `card p-4 rounded-xl shadow-lg ${currentTeam === 'A' ? 'hover:border-blue-500' : 'hover:border-red-500'}`;
                     div.innerHTML = `
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-black text-white text-lg truncate w-44 tracking-tight">${p.name}</span>
-                            <div class="text-right">
-                                <span class="block text-[10px] text-slate-500 font-bold uppercase tracking-widest">Merits</span>
-                                <span class="text-xl font-black text-orange-500 font-mono">${p.merits.toLocaleString()}</span>
-                            </div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-white text-sm">${p.name}</span>
+                            <span class="text-lg font-black text-orange-400 font-mono">${(p.merits/1000000).toFixed(1)}M</span>
                         </div>
-                        
-                        <div class="mb-5">
-                             <span class="text-[10px] font-bold text-slate-500 tracking-tighter uppercase">Power Score:</span>
-                             <span class="text-xs font-bold text-slate-300 ml-1 font-mono">${p.highest_power.toLocaleString()}</span>
+                        <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 mb-4">
+                            <div>PWR: <span class="text-slate-300 font-bold">${(p.highest_power/1000000).toFixed(0)}M</span></div>
+                            <div>Kills: <span class="text-red-400 font-bold">${(p.units_killed/1000000).toFixed(0)}M</span></div>
                         </div>
-
-                        <div class="stat-grid grid grid-cols-3 gap-2 mb-6">
-                            <div class="text-center">
-                                <p class="text-[9px] font-bold text-slate-500 uppercase">Kills</p>
-                                <p class="text-[11px] font-black text-red-400 font-mono">${(p.units_killed/1000000).toFixed(1)}M</p>
-                            </div>
-                            <div class="text-center border-x border-slate-700/50">
-                                <p class="text-[9px] font-bold text-slate-500 uppercase">Heals</p>
-                                <p class="text-[11px] font-black text-green-400 font-mono">${(p.units_healed/1000000).toFixed(1)}M</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-[9px] font-bold text-slate-500 uppercase">Dead</p>
-                                <p class="text-[11px] font-black text-slate-200 font-mono">${(p.units_dead/1000000).toFixed(1)}M</p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-3">
-                            <button onclick="draft(${p.originalIndex}, 'A')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-[11px] font-black py-2 rounded-lg transition uppercase tracking-widest">Draft Alpha</button>
-                            <button onclick="draft(${p.originalIndex}, 'B')" class="flex-1 bg-red-600 hover:bg-red-500 text-[11px] font-black py-2 rounded-lg transition uppercase tracking-widest">Draft Bravo</button>
+                        <div class="flex gap-2">
+                            <button onclick="draft(${p.id}, 'A')" ${currentTeam !== 'A' ? 'disabled' : ''} class="btn-draft flex-1 bg-blue-600 text-[10px] py-1 rounded font-bold">DRAFT</button>
+                            <button onclick="draft(${p.id}, 'B')" ${currentTeam !== 'B' ? 'disabled' : ''} class="btn-draft flex-1 bg-red-600 text-[10px] py-1 rounded font-bold">DRAFT</button>
                         </div>
                     `;
                     grid.appendChild(div);
                 } else {
                     const target = inA ? listA : listB;
-                    if (inA) sA += p.merits; else sB += p.merits;
-                    target.innerHTML += `
-                        <div class="flex justify-between items-center text-[12px] py-2 border-b border-slate-700/30">
-                            <span class="font-bold text-slate-300">${p.name}</span>
-                            <span class="font-mono font-bold text-slate-500">${p.merits.toLocaleString()}</span>
-                        </div>`;
+                    if (inA) { sA += p.merits; totalsA.killed += p.units_killed; totalsA.healed += p.units_healed; }
+                    else { sB += p.merits; totalsB.killed += p.units_killed; totalsB.healed += p.units_healed; }
+                    target.innerHTML += `<div class="flex justify-between py-1 border-b border-slate-700/30"><span>${p.name}</span><span class="text-slate-500">${(p.merits/1000000).toFixed(1)}M</span></div>`;
                 }
             });
+
             document.getElementById('count').innerText = count;
             document.getElementById('scoreA').innerText = sA.toLocaleString();
             document.getElementById('scoreB').innerText = sB.toLocaleString();
+
+            // Comparison Bars
+            renderComparison(sA, sB, totalsA, totalsB);
         }
+
+        function renderComparison(sA, sB, tA, tB) {
+            const comp = document.getElementById('comparison');
+            const buildBar = (label, valA, valB, colorA, colorB) => {
+                const total = valA + valB || 1;
+                const perA = (valA / total * 100).toFixed(0);
+                return `<div class="text-[10px] mb-2 font-bold text-slate-500 uppercase">${label}</div>
+                        <div class="flex w-full bg-slate-900 rounded-full overflow-hidden mb-4 border border-slate-700">
+                            <div class="${colorA} comparison-bar" style="width: ${perA}%"></div>
+                            <div class="${colorB} comparison-bar" style="width: ${100-perA}%"></div>
+                        </div>`;
+            };
+            comp.innerHTML = buildBar('Total Merits', sA, sB, 'bg-blue-500', 'bg-red-500') +
+                             buildBar('Team Kills', tA.killed, tB.killed, 'bg-blue-400', 'bg-red-400') +
+                             buildBar('Team Heals', tA.healed, tB.healed, 'bg-blue-300', 'bg-red-300');
+        }
+
         setInterval(sync, 2000);
         sync();
     </script>
@@ -225,6 +268,13 @@ def index():
 def get_state():
     return jsonify(state)
 
+@app.route('/api/names', methods=['POST'])
+def update_names():
+    data = request.json
+    state['teamNames']['A'] = data.get('A', 'Alpha')
+    state['teamNames']['B'] = data.get('B', 'Bravo')
+    return jsonify({"success": True})
+
 @app.route('/api/draft', methods=['POST'])
 def draft_player():
     data = request.json
@@ -232,11 +282,14 @@ def draft_player():
     if idx not in state['teamA'] and idx not in state['teamB']:
         if team == 'A': state['teamA'].append(idx)
         else: state['teamB'].append(idx)
+        state['history'].append({"player": PLAYERS[idx]['name'], "team": team})
+        state['turn'] += 1
     return jsonify({"success": True})
 
 @app.route('/api/reset', methods=['POST'])
 def reset():
-    state['teamA'], state['teamB'] = [], []
+    state['teamA'], state['teamB'], state['history'] = [], [], []
+    state['turn'] = 0
     return jsonify({"success": True})
 
 if __name__ == '__main__':
