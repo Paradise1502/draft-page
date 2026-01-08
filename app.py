@@ -1,8 +1,9 @@
-from flask import Flask, render_template_string, jsonify, request
+import os
+from flask import Flask, jsonify, request, send_from_directory
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 
-# This is the "Live" state of the draft
+# The live state of your draft (stored in memory)
 state = {"teamA": [], "teamB": []}
 
 # REAL DATA FROM YOUR CSV
@@ -36,8 +37,8 @@ PLAYERS = [
 ]
 
 @app.route('/')
-def index():
-    return open('index.html').read()
+def serve_index():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/api/state')
 def get_state():
@@ -48,8 +49,9 @@ def draft_player():
     data = request.json
     player_idx = data.get('index')
     team = data.get('team')
-    if team == 'A': state['teamA'].append(player_idx)
-    else: state['teamB'].append(player_idx)
+    if player_idx not in state['teamA'] and player_idx not in state['teamB']:
+        if team == 'A': state['teamA'].append(player_idx)
+        else: state['teamB'].append(player_idx)
     return jsonify({"success": True})
 
 @app.route('/api/reset', methods=['POST'])
@@ -59,4 +61,6 @@ def reset():
     return jsonify({"success": True})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    # RAILWAY FIX: Use os.environ.get('PORT') and host='0.0.0.0'
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
