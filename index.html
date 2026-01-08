@@ -1,24 +1,161 @@
-<script>
-    const players = [ /* Your player list goes here */ ];
-    let localState = { teamA: [], teamB: [] };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live CoD Merit Draft</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .stat-card { transition: all 0.2s; border: 1px solid #334155; }
+        .stat-card:hover { transform: translateY(-3px); border-color: #f97316; }
+        body { background-color: #0f172a; color: white; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <header class="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-slate-700 pb-6">
+        <div>
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">MERIT RACE DRAFT</h1>
+            <p class="text-slate-400 font-medium">Live Scouting Board</p>
+        </div>
+        <div class="flex gap-3">
+            <input type="text" id="searchInput" placeholder="Search name..." class="bg-slate-800 border border-slate-600 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <button onclick="resetDraft()" class="bg-red-900/30 hover:bg-red-900/60 border border-red-500/50 px-4 py-2 rounded-lg text-xs transition">Reset All</button>
+        </div>
+    </header>
 
-    // This function asks the server "Who has been picked?" every 2 seconds
-    async function updateFromServer() {
-        const res = await fetch('/api/state');
-        localState = await res.json();
-        render(); // This redraws the screen with the new data
-    }
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-green-400">AVAILABLE PLAYERS (<span id="count">0</span>)</h2>
+            <div id="playerGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-slate-800 rounded-xl p-5 border-t-4 border-blue-500 shadow-2xl">
+                <div class="flex justify-between items-end mb-4">
+                    <h3 class="text-2xl font-bold text-blue-400">Team Alpha</h3>
+                    <div class="text-right"><span class="text-[10px] uppercase text-slate-400 block">Total Merits</span><span id="scoreA" class="text-xl font-mono font-bold text-white">0</span></div>
+                </div>
+                <div id="listA" class="space-y-2 border-t border-slate-700 pt-4 min-h-[50px]"></div>
+            </div>
+            <div class="bg-slate-800 rounded-xl p-5 border-t-4 border-red-500 shadow-2xl">
+                <div class="flex justify-between items-end mb-4">
+                    <h3 class="text-2xl font-bold text-red-400">Team Bravo</h3>
+                    <div class="text-right"><span class="text-[10px] uppercase text-slate-400 block">Total Merits</span><span id="scoreB" class="text-xl font-mono font-bold text-white">0</span></div>
+                </div>
+                <div id="listB" class="space-y-2 border-t border-slate-700 pt-4 min-h-[50px]"></div>
+            </div>
+        </div>
+    </main>
 
-    // This function tells the server "I am picking this player"
-    async function draft(i, team) {
-        await fetch('/api/draft', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({index: i, team: team})
-        });
+    <script>
+        const players = [
+            {"name": "Visjes x Untouch", "merits": 51456263, "highest_power": 171680945, "units_killed": 1735428852, "units_dead": 3763848, "units_healed": 786250054},
+            {"name": "Paradise 㞧", "merits": 43237712, "highest_power": 160850254, "units_killed": 1007341529, "units_dead": 5338698, "units_healed": 509946382},
+            {"name": "ᴺᵒᴸᴵᶠᵉBaLaKaS 㞧", "merits": 40232479, "highest_power": 100065909, "units_killed": 716845531, "units_dead": 2499961, "units_healed": 414669817},
+            {"name": "meowcita 㞧", "merits": 31116189, "highest_power": 127330044, "units_killed": 544670649, "units_dead": 3929202, "units_healed": 436964899},
+            {"name": "EpicBacon 㞧 ᴹ ᶠ ᴰ", "merits": 30315878, "highest_power": 140940940, "units_killed": 960950038, "units_dead": 1779730, "units_healed": 550678150},
+            {"name": "Spuder 㞧", "merits": 24611147, "highest_power": 131873932, "units_killed": 651831641, "units_dead": 3429892, "units_healed": 369584759},
+            {"name": "Willieboi 㞧", "merits": 22856826, "highest_power": 131028002, "units_killed": 634349009, "units_dead": 3603943, "units_healed": 495783655},
+            {"name": "Dam1z 㞧 Cai", "merits": 22172792, "highest_power": 161986222, "units_killed": 900128778, "units_dead": 2295487, "units_healed": 698714931},
+            {"name": "Hyper 㞧", "merits": 22168036, "highest_power": 121199584, "units_killed": 697578757, "units_dead": 3365298, "units_healed": 471042697},
+            {"name": "Crayons 㞧", "merits": 21071160, "highest_power": 140592056, "units_killed": 1019303207, "units_dead": 3740549, "units_healed": 567245407},
+            {"name": "ᴴˢᵘ Alan 㞧", "merits": 19928173, "highest_power": 148607524, "units_killed": 826521293, "units_dead": 4638515, "units_healed": 523026871},
+            {"name": "Bepis Enjoyer㞧", "merits": 18734240, "highest_power": 165020368, "units_killed": 611716384, "units_dead": 6888034, "units_healed": 357442961},
+            {"name": "Queek 㞧", "merits": 18081019, "highest_power": 204008595, "units_killed": 906930809, "units_dead": 4221776, "units_healed": 602143356},
+            {"name": "Sᴛʀ乂ᴋᴇʀ 㞧", "merits": 17394635, "highest_power": 141232529, "units_killed": 888359612, "units_dead": 4433680, "units_healed": 468769153},
+            {"name": "10010111000101㞧", "merits": 16542064, "highest_power": 122189723, "units_killed": 662067434, "units_dead": 6229953, "units_healed": 483534466},
+            {"name": "Mortredz㞧", "merits": 16399865, "highest_power": 159264034, "units_killed": 926244633, "units_dead": 3995478, "units_healed": 584313055},
+            {"name": "ᴴʸᵖᵉʳ TitaniumXSus", "merits": 15676930, "highest_power": 117661654, "units_killed": 566991526, "units_dead": 2314578, "units_healed": 355658452},
+            {"name": "Ѕanji 㞧", "merits": 15405056, "highest_power": 130363631, "units_killed": 401193775, "units_dead": 2438068, "units_healed": 348569082},
+            {"name": "ɴᴀʏᴀ 㞧", "merits": 15317460, "highest_power": 172975523, "units_killed": 982909857, "units_dead": 4266411, "units_healed": 483667317},
+            {"name": "ᴹ ᶠ ᴰ Darkness 㞧", "merits": 14584729, "highest_power": 121249235, "units_killed": 412432043, "units_dead": 4813962, "units_healed": 366695098},
+            {"name": "Green 㞧", "merits": 14569768, "highest_power": 118189690, "units_killed": 451668743, "units_dead": 3790048, "units_healed": 298620325},
+            {"name": "Mr Swagger 㞧", "merits": 14205157, "highest_power": 104892343, "units_killed": 342678281, "units_dead": 3040047, "units_healed": 402724859},
+            {"name": "POOLBOY 㞧", "merits": 13766330, "highest_power": 111377799, "units_killed": 469194727, "units_dead": 2420275, "units_healed": 253903860},
+            {"name": "ᴴʸᵖᵉʳLeng 㞧", "merits": 13418213, "highest_power": 95864857, "units_killed": 298924214, "units_dead": 1707740, "units_healed": 297258406},
+            {"name": "Hippi 㞧", "merits": 12964475, "highest_power": 122810306, "units_killed": 369785130, "units_dead": 1923643, "units_healed": 231439072},
+            {"name": "Marky Mark 㞧", "merits": 12333098, "highest_power": 158829474, "units_killed": 944360343, "units_dead": 4275556, "units_healed": 529601779}
+        ];
+
+        let state = { teamA: [], teamB: [] };
+        const f = (n) => new Intl.NumberFormat().format(n);
+
+        async function updateFromServer() {
+            try {
+                const res = await fetch('/api/state');
+                state = await res.json();
+                render();
+            } catch (e) { console.log("Waiting for server..."); }
+        }
+
+        async function draft(i, team) {
+            await fetch('/api/draft', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: i, team: team})
+            });
+            updateFromServer();
+        }
+
+        async function resetDraft() {
+            if(confirm("Clear all picks?")) {
+                await fetch('/api/reset', {method: 'POST'});
+                updateFromServer();
+            }
+        }
+
+        function render() {
+            const grid = document.getElementById('playerGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const listA = document.getElementById('listA');
+            const listB = document.getElementById('listB');
+
+            grid.innerHTML = ''; listA.innerHTML = ''; listB.innerHTML = '';
+            let totalA = 0, totalB = 0, count = 0;
+
+            players.forEach((p, i) => {
+                const inA = state.teamA.includes(i);
+                const inB = state.teamB.includes(i);
+
+                if (!inA && !inB) {
+                    if (p.name.toLowerCase().includes(search)) {
+                        count++;
+                        const card = document.createElement('div');
+                        card.className = 'stat-card bg-slate-800 p-4 rounded-xl shadow-lg';
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start mb-3">
+                                <h4 class="font-bold text-orange-400 text-lg">${p.name}</h4>
+                                <span class="text-[10px] bg-slate-700 px-2 py-1 rounded text-slate-300">PWR: ${f(p.highest_power)}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mb-4">
+                                <div><p class="text-[10px] text-slate-400 uppercase">Merits</p><p class="text-sm font-bold">${f(p.merits)}</p></div>
+                                <div><p class="text-[10px] text-slate-400 uppercase">Killed</p><p class="text-sm font-bold text-red-400">${f(p.units_killed)}</p></div>
+                                <div><p class="text-[10px] text-slate-400 uppercase">Healed</p><p class="text-sm font-bold text-green-400">${f(p.units_healed)}</p></div>
+                                <div><p class="text-[10px] text-slate-400 uppercase">Dead</p><p class="text-sm font-bold text-slate-300">${f(p.units_dead)}</p></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="draft(${i}, 'A')" class="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded text-[10px] font-bold transition uppercase">T-Alpha</button>
+                                <button onclick="draft(${i}, 'B')" class="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded text-[10px] font-bold transition uppercase">T-Bravo</button>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    }
+                } else {
+                    const list = inA ? listA : listB;
+                    if (inA) totalA += p.merits; else totalB += p.merits;
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between items-center bg-slate-900/50 p-2 rounded border border-slate-700 text-[11px]';
+                    item.innerHTML = `<span>${p.name}</span><span class="font-mono text-slate-400">${f(p.merits)}</span>`;
+                    list.appendChild(item);
+                }
+            });
+            document.getElementById('count').innerText = count;
+            document.getElementById('scoreA').innerText = f(totalA);
+            document.getElementById('scoreB').innerText = f(totalB);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', render);
+        setInterval(updateFromServer, 2000);
         updateFromServer();
-    }
-
-    setInterval(updateFromServer, 2000); // Auto-sync every 2 seconds
-    updateFromServer(); // Initial load
-</script>
+    </script>
+</body>
+</html>
