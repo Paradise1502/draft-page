@@ -111,7 +111,7 @@ HTML_CONTENT = """
             </div>
 
             <div class="xl:col-span-4">
-                <h2 class="text-xl font-black text-blue-400 uppercase italic tracking-tighter mb-6">Team Squads</h2>
+                <h2 class="text-xl font-black text-blue-400 uppercase italic tracking-tighter mb-6">Teams</h2>
                 <div id="rosterContainer" class="grid grid-cols-1 gap-6">
                     </div>
             </div>
@@ -354,6 +354,7 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
 
