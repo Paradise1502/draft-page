@@ -41,29 +41,55 @@ HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Live Merit Draft</title>
+    <meta charset="UTF-8"><title>Live CoD Merit Draft</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background-color: #0f172a; color: white; } .card { border: 1px solid #334155; transition: 0.2s; } .card:hover { border-color: #f97316; }</style>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: sans-serif; }
+        .card { border: 1px solid #334155; transition: 0.2s; background: #1e293b; }
+        .card:hover { border-color: #f97316; transform: translateY(-2px); }
+        .stat-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-weight: bold; font-size: 11px; }
+    </style>
 </head>
-<body class="p-4">
-    <div class="max-w-6xl mx-auto">
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
         <header class="flex justify-between items-center mb-8 pb-4 border-b border-slate-700">
-            <h1 class="text-3xl font-bold text-orange-500">MERIT RACE DRAFT</h1>
-            <button onclick="resetDraft()" class="text-xs text-red-400 border border-red-500/30 px-2 py-1 rounded">Reset</button>
+            <div>
+                <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">MERIT RACE DRAFT</h1>
+                <p class="text-slate-400 text-sm">Season 8 Live Scouting Board</p>
+            </div>
+            <button onclick="resetDraft()" class="bg-red-900/20 hover:bg-red-900/40 border border-red-500/50 px-4 py-2 rounded-lg text-xs font-bold transition">RESET DRAFT</button>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-8">
+                <h2 class="text-xl font-bold mb-4 text-green-400 flex items-center gap-2">
+                    AVAILABLE PLAYERS (<span id="count">0</span>)
+                </h2>
                 <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
-            <div class="space-y-6">
-                <div class="bg-slate-800 p-4 rounded-xl border-t-4 border-blue-500">
-                    <div class="flex justify-between mb-4"><h3 class="font-bold text-blue-400">Team Alpha</h3><span id="scoreA" class="font-mono">0</span></div>
-                    <div id="listA" class="space-y-1 text-xs"></div>
+
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-slate-800 p-5 rounded-xl border-t-4 border-blue-500 shadow-xl">
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="text-xl font-bold text-blue-400 uppercase">Team Alpha</h3>
+                        <div class="text-right">
+                            <span class="stat-label block text-[9px]">Total Merits</span>
+                            <span id="scoreA" class="text-lg font-mono font-bold text-white">0</span>
+                        </div>
+                    </div>
+                    <div id="listA" class="space-y-1 border-t border-slate-700 pt-3"></div>
                 </div>
-                <div class="bg-slate-800 p-4 rounded-xl border-t-4 border-red-500">
-                    <div class="flex justify-between mb-4"><h3 class="font-bold text-red-400">Team Bravo</h3><span id="scoreB" class="font-mono">0</span></div>
-                    <div id="listB" class="space-y-1 text-xs"></div>
+
+                <div class="bg-slate-800 p-5 rounded-xl border-t-4 border-red-500 shadow-xl">
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="text-xl font-bold text-red-400 uppercase">Team Bravo</h3>
+                        <div class="text-right">
+                            <span class="stat-label block text-[9px]">Total Merits</span>
+                            <span id="scoreB" class="text-lg font-mono font-bold text-white">0</span>
+                        </div>
+                    </div>
+                    <div id="listB" class="space-y-1 border-t border-slate-700 pt-3"></div>
                 </div>
             </div>
         </div>
@@ -74,9 +100,11 @@ HTML_CONTENT = """
         let state = { teamA: [], teamB: [] };
 
         async function sync() {
-            const res = await fetch('/api/state');
-            state = await res.json();
-            render();
+            try {
+                const res = await fetch('/api/state');
+                state = await res.json();
+                render();
+            } catch (e) { console.error("Sync failed"); }
         }
 
         async function draft(idx, team) {
@@ -89,7 +117,10 @@ HTML_CONTENT = """
         }
 
         async function resetDraft() {
-            if(confirm("Reset all?")) { await fetch('/api/reset', {method: 'POST'}); sync(); }
+            if(confirm("Are you sure? This clears all picks for everyone.")) {
+                await fetch('/api/reset', {method: 'POST'});
+                sync();
+            }
         }
 
         function render() {
@@ -97,32 +128,44 @@ HTML_CONTENT = """
             const listA = document.getElementById('listA');
             const listB = document.getElementById('listB');
             grid.innerHTML = ''; listA.innerHTML = ''; listB.innerHTML = '';
-            let sA = 0, sB = 0;
+            let sA = 0, sB = 0, count = 0;
 
             players.forEach((p, i) => {
                 const inA = state.teamA.includes(i);
                 const inB = state.teamB.includes(i);
+                
                 if (!inA && !inB) {
+                    count++;
                     const div = document.createElement('div');
-                    div.className = 'card bg-slate-800 p-4 rounded-lg shadow-lg';
+                    div.className = 'card p-4 rounded-lg shadow-lg';
                     div.innerHTML = `
-                        <div class="flex justify-between mb-2"><span class="font-bold text-orange-400 text-sm">${p.name}</span><span class="text-[10px] text-slate-500">${(p.highest_power/1000000).toFixed(1)}M</span></div>
-                        <div class="grid grid-cols-2 text-[10px] text-slate-400 mb-3">
-                            <div>Merits: <span class="text-white">${p.merits.toLocaleString()}</span></div>
-                            <div>Kills: <span class="text-white">${p.units_killed.toLocaleString()}</span></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="font-bold text-orange-400 text-sm truncate w-40" title="${p.name}">${p.name}</span>
+                            <span class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">PWR: ${p.highest_power.toLocaleString()}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
+                            <div><p class="stat-label">Merits</p><p class="stat-value text-white">${p.merits.toLocaleString()}</p></div>
+                            <div><p class="stat-label">Units Killed</p><p class="stat-value text-red-400">${p.units_killed.toLocaleString()}</p></div>
+                            <div><p class="stat-label">Units Healed</p><p class="stat-value text-green-400">${p.units_healed.toLocaleString()}</p></div>
+                            <div><p class="stat-label">Units Dead</p><p class="stat-value text-slate-100">${p.units_dead.toLocaleString()}</p></div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="draft(${i}, 'A')" class="flex-1 bg-blue-600 text-[10px] py-1 rounded">Alpha</button>
-                            <button onclick="draft(${i}, 'B')" class="flex-1 bg-red-600 text-[10px] py-1 rounded">Bravo</button>
+                            <button onclick="draft(${i}, 'A')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-[10px] font-bold py-1.5 rounded transition uppercase">Alpha</button>
+                            <button onclick="draft(${i}, 'B')" class="flex-1 bg-red-600 hover:bg-red-500 text-[10px] font-bold py-1.5 rounded transition uppercase">Bravo</button>
                         </div>
                     `;
                     grid.appendChild(div);
                 } else {
                     const target = inA ? listA : listB;
                     if (inA) sA += p.merits; else sB += p.merits;
-                    target.innerHTML += `<div class="flex justify-between border-b border-slate-700/50 py-1"><span>${p.name}</span><span>${p.merits.toLocaleString()}</span></div>`;
+                    target.innerHTML += `
+                        <div class="flex justify-between items-center text-[11px] py-1.5 border-b border-slate-700/50">
+                            <span class="font-medium text-slate-200">${p.name}</span>
+                            <span class="font-mono text-slate-400">${p.merits.toLocaleString()}</span>
+                        </div>`;
                 }
             });
+            document.getElementById('count').innerText = count;
             document.getElementById('scoreA').innerText = sA.toLocaleString();
             document.getElementById('scoreB').innerText = sB.toLocaleString();
         }
@@ -142,7 +185,7 @@ def get_state():
     return jsonify(state)
 
 @app.route('/api/draft', methods=['POST'])
-def draft():
+def draft_player():
     data = request.json
     idx, team = data.get('index'), data.get('team')
     if idx not in state['teamA'] and idx not in state['teamB']:
