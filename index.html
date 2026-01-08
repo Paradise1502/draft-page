@@ -1,0 +1,26 @@
+let localState = { teamA: [], teamB: [] };
+const players = [ /* Insert the same player list here */ ];
+
+async function updateFromServer() {
+    const res = await fetch('/api/state');
+    localState = await res.json();
+    render();
+}
+
+async function draft(i, team) {
+    await fetch('/api/draft', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({index: i, team: team})
+    });
+    updateFromServer();
+}
+
+async function resetDraft() {
+    await fetch('/api/reset', {method: 'POST'});
+    updateFromServer();
+}
+
+// Update the screen every 2 seconds automatically
+setInterval(updateFromServer, 2000);
+updateFromServer();
