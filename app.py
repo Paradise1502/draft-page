@@ -50,7 +50,7 @@ HTML_CONTENT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Draft Dashboard</title>
+    <title>Broken Crown</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -58,74 +58,70 @@ HTML_CONTENT = """
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .player-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .player-card:hover { transform: scale(1.02); border-color: rgba(249, 115, 22, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
-        .turn-ticker { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .stat-badge { font-family: monospace; }
         .stacked-bar { height: 12px; border-radius: 6px; transition: width 0.8s ease; }
     </style>
 </head>
-<body class="p-4 lg:p-10 scrollbar-hide">
-    <div class="max-w-[1700px] mx-auto">
+<body class="p-4 lg:p-6 scrollbar-hide">
+    <div class="max-w-[1850px] mx-auto">
         
-        <header class="flex flex-col xl:flex-row items-center justify-between gap-6 mb-12">
+        <header class="flex flex-col xl:flex-row items-center justify-between gap-6 mb-8">
             <div class="flex items-center gap-4">
                 <div class="bg-orange-500 p-3 rounded-2xl shadow-lg shadow-orange-500/20">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none">Broken Crown</h1>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-1">Live Fantasy Draft Portal</p>
+                    <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none">Scouting Room</h1>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-1">Live Fantasy Draft Portal</p>
                 </div>
             </div>
 
-            <div id="turnTicker" class="glass px-8 py-4 rounded-3xl border-2 flex items-center gap-6 shadow-2xl transition-colors duration-500">
-                <span class="text-xs font-black uppercase tracking-[0.4em] text-slate-400">Next up</span>
-                <span id="turnName" class="text-2xl font-black uppercase italic tracking-tight">---</span>
+            <div id="turnTicker" class="glass px-8 py-3 rounded-2xl border-2 flex items-center gap-6 shadow-2xl transition-colors duration-500">
+                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">On The Clock</span>
+                <span id="turnName" class="text-xl font-black uppercase italic tracking-tight">---</span>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex gap-2">
                 <button onclick="addTeam()" class="glass hover:bg-white/5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition">+ Team</button>
                 <button onclick="resetDraft()" class="glass hover:bg-red-500/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 transition">Reset</button>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-10">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
             
-            <aside class="xl:col-span-3 space-y-8">
-                <div class="glass p-6 rounded-[2rem] shadow-xl">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Global Power Levels</h3>
-                    <div id="comparison" class="space-y-8"></div>
+            <aside class="xl:col-span-2 space-y-6">
+                <div class="glass p-5 rounded-[1.5rem] shadow-xl">
+                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Team Progress</h3>
+                    <div id="comparison" class="space-y-6"></div>
                 </div>
 
-                <div class="glass p-6 rounded-[2rem] shadow-xl">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Pick Stream</h3>
-                    <div id="historyList" class="space-y-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide"></div>
+                <div class="glass p-5 rounded-[1.5rem] shadow-xl">
+                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Pick Stream</h3>
+                    <div id="historyList" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide text-[10px]"></div>
                 </div>
             </aside>
 
-            <main class="xl:col-span-5">
-                <div class="flex items-center justify-between mb-8 px-2">
-                    <h2 class="text-2xl font-black uppercase tracking-tighter italic">Prospect Pool <span class="text-orange-500" id="count">0</span></h2>
-                    <div class="flex gap-4">
-                        <select id="sortSelect" onchange="render()" class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-400 outline-none cursor-pointer">
-                            <option value="merits">Sort: Merits</option>
-                            <option value="highest_power">Sort: Power</option>
-                            <option value="units_killed">Sort: Kills</option>
-                        </select>
-                    </div>
+            <main class="xl:col-span-7">
+                <div class="flex items-center justify-between mb-6 px-2">
+                    <h2 class="text-xl font-black uppercase tracking-tighter italic text-green-400">Available Pool <span class="ml-2 text-white" id="count">0</span></h2>
+                    <select id="sortSelect" onchange="render()" class="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-slate-400 outline-none cursor-pointer">
+                        <option value="merits">Sort: Merits</option>
+                        <option value="highest_power">Sort: Power</option>
+                        <option value="units_killed">Sort: Kills</option>
+                    </select>
                 </div>
                 
-                <div id="grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"></div>
+                <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 pb-20"></div>
             </main>
 
-            <section class="xl:col-span-4 space-y-8">
-                <div class="glass p-6 rounded-[2rem] shadow-xl mb-10">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Manager Console</h3>
-                    <div id="teamNamesContainer" class="grid grid-cols-2 gap-4"></div>
+            <section class="xl:col-span-3 space-y-6">
+                <div class="glass p-5 rounded-[1.5rem] shadow-xl mb-6">
+                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Managers</h3>
+                    <div id="teamNamesContainer" class="grid grid-cols-2 gap-2"></div>
                 </div>
 
-                <div id="rosterContainer" class="space-y-6"></div>
+                <div id="rosterContainer" class="space-y-4"></div>
             </section>
 
         </div>
@@ -154,7 +150,7 @@ HTML_CONTENT = """
                     const inputId = `name-${t.id}`;
                     if (!document.getElementById(inputId)) {
                         const wrapper = document.createElement('div');
-                        wrapper.innerHTML = `<input type="text" id="${inputId}" oninput="updateName(${t.id})" placeholder="Team ${i+1}" class="w-full bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-xs font-bold outline-none focus:border-white/20" style="color: ${COLORS[i % COLORS.length]}">`;
+                        wrapper.innerHTML = `<input type="text" id="${inputId}" oninput="updateName(${t.id})" placeholder="Team ${i+1}" class="w-full bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-bold outline-none focus:border-white/20" style="color: ${COLORS[i % COLORS.length]}">`;
                         nameContainer.appendChild(wrapper);
                     }
                     const input = document.getElementById(inputId);
@@ -184,21 +180,19 @@ HTML_CONTENT = """
             const turnInfo = getTurnInfo(state.turn, state.teams.length);
             const turnColor = COLORS[turnInfo.teamId % COLORS.length];
 
-            // Ticker Update
             document.getElementById('turnTicker').style.borderColor = `${turnColor}44`;
             document.getElementById('turnName').innerText = turnInfo.name;
             document.getElementById('turnName').style.color = turnColor;
 
             grid.innerHTML = ''; rosterCont.innerHTML = ''; hist.innerHTML = '';
 
-            // History Stream
             state.history.forEach(item => {
                 const color = COLORS[item.teamId % COLORS.length];
                 hist.innerHTML = `
-                    <div class="flex items-center justify-between bg-white/5 p-3 rounded-2xl border-l-4" style="border-color: ${color}">
+                    <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl border-l-2 mb-1" style="border-color: ${color}">
                         <div class="flex flex-col">
-                            <span class="text-[9px] font-black uppercase text-slate-500">${item.teamName}</span>
-                            <span class="text-sm font-bold tracking-tight">${item.player}</span>
+                            <span class="text-[8px] font-black uppercase text-slate-500">${item.teamName}</span>
+                            <span class="font-bold tracking-tight">${item.player}</span>
                         </div>
                     </div>` + hist.innerHTML;
             });
@@ -211,37 +205,29 @@ HTML_CONTENT = """
 
             available.forEach((p) => {
                 const div = document.createElement('div');
-                div.className = 'player-card glass p-6 rounded-[2.5rem] shadow-2xl relative overflow-hidden';
+                div.className = 'player-card glass p-4 rounded-[1.5rem] shadow-xl text-center flex flex-col justify-between';
                 div.innerHTML = `
-                    <div class="text-center relative z-10">
-                        <div class="inline-block bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Merits: ${p.merits.toLocaleString()}</div>
-                        <h3 class="text-xl font-black uppercase tracking-tighter mb-6">${p.name}</h3>
+                    <div>
+                        <div class="text-[10px] font-black text-orange-500 mb-1">${p.merits.toLocaleString()}</div>
+                        <h3 class="text-sm font-black uppercase tracking-tight mb-4 truncate border-b border-white/5 pb-2">${p.name}</h3>
                         
-                        <div class="grid grid-cols-2 gap-3 mb-8">
-                            <div class="bg-white/5 p-3 rounded-2xl">
-                                <p class="text-[8px] font-black uppercase text-slate-500 mb-1">Power</p>
-                                <p class="stat-badge text-sm font-black">${(p.highest_power/1000000).toFixed(1)}M</p>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div class="bg-white/5 p-2 rounded-xl">
+                                <p class="text-[7px] font-black uppercase text-slate-500">Pwr</p>
+                                <p class="text-[10px] font-black">${(p.highest_power/1000000).toFixed(1)}M</p>
                             </div>
-                            <div class="bg-white/5 p-3 rounded-2xl">
-                                <p class="text-[8px] font-black uppercase text-slate-500 mb-1">Units Killed</p>
-                                <p class="stat-badge text-sm font-black text-red-400">${(p.units_killed/1000000).toFixed(0)}M</p>
-                            </div>
-                            <div class="bg-white/5 p-3 rounded-2xl">
-                                <p class="text-[8px] font-black uppercase text-slate-500 mb-1">Units Healed</p>
-                                <p class="stat-badge text-sm font-black text-emerald-400">${(p.units_healed/1000000).toFixed(0)}M</p>
-                            </div>
-                            <div class="bg-white/5 p-3 rounded-2xl">
-                                <p class="text-[8px] font-black uppercase text-slate-500 mb-1">Units Dead</p>
-                                <p class="stat-badge text-sm font-black text-slate-400">${(p.units_dead/1000000).toFixed(1)}M</p>
+                            <div class="bg-white/5 p-2 rounded-xl">
+                                <p class="text-[7px] font-black uppercase text-slate-500">Kills</p>
+                                <p class="text-[10px] font-black text-red-400">${(p.units_killed/1000000).toFixed(0)}M</p>
                             </div>
                         </div>
-
-                        <button onclick="draft(${p.id}, ${turnInfo.teamId})" 
-                                style="background-color: ${turnColor};"
-                                class="w-full py-4 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:brightness-125 transition">
-                            Confirm Pick
-                        </button>
                     </div>
+
+                    <button onclick="draft(${p.id}, ${turnInfo.teamId})" 
+                            style="background-color: ${turnColor};"
+                            class="w-full py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:brightness-125 transition">
+                        Pick
+                    </button>
                 `;
                 grid.appendChild(div);
             });
@@ -255,32 +241,25 @@ HTML_CONTENT = """
                     const pl = players[pid];
                     m += pl.merits; p += pl.highest_power; k += pl.units_killed; h += pl.units_healed;
                     return `
-                        <div class="flex items-center justify-between py-3 border-b border-white/5">
-                            <span class="text-xs font-bold uppercase tracking-tight">${pl.name}</span>
-                            <div class="flex gap-2">
-                                <span class="stat-badge text-[9px] bg-red-500/10 text-red-500 px-1.5 rounded">K:${(pl.units_killed/1000000).toFixed(0)}M</span>
-                                <span class="stat-badge text-[9px] bg-orange-500/10 text-orange-400 px-1.5 rounded">${pl.merits.toLocaleString()}</span>
-                            </div>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5 text-[9px]">
+                            <span class="font-bold uppercase">${pl.name}</span>
+                            <span class="text-orange-400 font-black">${pl.merits.toLocaleString()}</span>
                         </div>`;
                 }).join('');
 
                 comparisonData.merits.push({val: m, color: COLORS[i % COLORS.length], name: t.name});
-                comparisonData.power.push({val: p, color: COLORS[i % COLORS.length], name: t.name});
                 comparisonData.killed.push({val: k, color: COLORS[i % COLORS.length], name: t.name});
-                comparisonData.healed.push({val: h, color: COLORS[i % COLORS.length], name: t.name});
 
                 const col = document.createElement('div');
-                col.className = 'glass p-6 rounded-[2rem] shadow-2xl relative overflow-hidden';
+                col.className = 'glass p-4 rounded-[1.2rem] shadow-xl relative overflow-hidden';
                 col.innerHTML = `
-                    <div class="absolute top-0 right-0 w-24 h-24 blur-3xl rounded-full opacity-10" style="background: ${COLORS[i % COLORS.length]}"></div>
-                    <div class="flex justify-between items-start mb-6 border-b border-white/5 pb-4">
-                        <h3 class="text-xl font-black uppercase italic" style="color: ${COLORS[i % COLORS.length]}">${t.name}</h3>
+                    <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
+                        <h3 class="text-xs font-black uppercase italic" style="color: ${COLORS[i % COLORS.length]}">${t.name}</h3>
                         <div class="text-right">
-                             <p class="text-[8px] font-black uppercase text-slate-500 mb-1">Team Merits</p>
-                             <p class="text-2xl font-black font-mono leading-none">${m.toLocaleString()}</p>
+                             <p class="text-[10px] font-black font-mono leading-none">${m.toLocaleString()}</p>
                         </div>
                     </div>
-                    <div class="space-y-1">${pickItems}</div>
+                    <div class="space-y-0 text-[10px]">${pickItems}</div>
                 `;
                 rosterCont.appendChild(col);
             });
@@ -299,16 +278,14 @@ HTML_CONTENT = """
                 }).join('');
                 return `
                 <div>
-                    <div class="flex justify-between text-[8px] font-black uppercase text-slate-500 mb-3 tracking-[0.2em]">
+                    <div class="flex justify-between text-[7px] font-black uppercase text-slate-500 mb-2 tracking-widest">
                         <span>${label}</span>
-                        <span class="text-white">${stats.sort((a,b)=>b.val-a.val)[0].name} Leading</span>
                     </div>
-                    <div class="flex w-full bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5 h-4">${bars}</div>
+                    <div class="flex w-full bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5 h-2">${bars}</div>
                 </div>`;
             };
             container.innerHTML += buildBar('Merit Power', data.merits);
-            container.innerHTML += buildBar('Combined Killcount', data.killed);
-            container.innerHTML += buildBar('Healing Capacity', data.healed);
+            container.innerHTML += buildBar('Kill Distribution', data.killed);
         }
 
         setInterval(sync, 2000);
@@ -360,4 +337,3 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
