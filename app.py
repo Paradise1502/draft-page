@@ -56,12 +56,12 @@ HTML_CONTENT = """
     <style>
         body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .player-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .player-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(255,255,255,0.05); }
         .player-card:hover { transform: translateY(-3px); border-color: rgba(249, 115, 22, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .stat-label { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-label { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
         .stat-val { font-family: monospace; font-weight: 700; font-size: 11px; }
-        .stacked-bar { height: 12px; border-radius: 6px; transition: width 0.8s ease; }
+        .stacked-bar { height: 16px; transition: width 0.8s ease; }
     </style>
 </head>
 <body class="p-4 lg:p-6 scrollbar-hide">
@@ -78,38 +78,38 @@ HTML_CONTENT = """
                 </div>
             </div>
 
-            <div id="turnTicker" class="glass px-8 py-3 rounded-2xl border-2 flex items-center gap-6 shadow-2xl transition-colors duration-500">
-                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Next up</span>
-                <span id="turnName" class="text-xl font-black uppercase italic tracking-tight">---</span>
+            <div id="turnTicker" class="glass px-10 py-4 rounded-3xl border-2 flex flex-col items-center gap-1 shadow-2xl transition-colors duration-500">
+                <span class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">On The Clock</span>
+                <span id="turnName" class="text-2xl font-black uppercase italic tracking-tight">---</span>
             </div>
 
             <div class="flex gap-2">
-                <button onclick="addTeam()" class="glass hover:bg-white/5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition">+ Team</button>
-                <button onclick="resetDraft()" class="glass hover:bg-red-500/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 transition">Reset</button>
+                <button onclick="addTeam()" class="glass hover:bg-white/5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition text-blue-400 border-blue-500/20">+ Team</button>
+                <button onclick="resetDraft()" class="glass hover:bg-red-500/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 transition border-red-500/20">Reset</button>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
             
-            <aside class="xl:col-span-2 space-y-6">
-                <div class="glass p-5 rounded-[1.5rem] shadow-xl">
-                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Team Progress</h3>
-                    <div id="comparison" class="space-y-6"></div>
+            <aside class="xl:col-span-3 space-y-6">
+                <div class="glass p-6 rounded-[2rem] shadow-xl">
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Team Leaderboard</h3>
+                    <div id="comparison" class="space-y-8"></div>
                 </div>
 
-                <div class="glass p-5 rounded-[1.5rem] shadow-xl">
-                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Pick Stream</h3>
-                    <div id="historyList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide text-[10px]"></div>
+                <div class="glass p-6 rounded-[2rem] shadow-xl">
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Draft Feed</h3>
+                    <div id="historyList" class="space-y-2 max-h-[350px] overflow-y-auto pr-2 scrollbar-hide text-[10px]"></div>
                 </div>
             </aside>
 
-            <main class="xl:col-span-7">
+            <main class="xl:col-span-6">
                 <div class="flex items-center justify-between mb-6 px-2">
-                    <h2 class="text-xl font-black uppercase tracking-tighter italic text-green-400">Available Pool <span class="ml-2 text-white" id="count">0</span></h2>
+                    <h2 class="text-xl font-black uppercase tracking-tighter italic text-green-400">Prospects Available <span class="ml-2 text-white bg-slate-800 px-3 py-1 rounded-full text-sm" id="count">0</span></h2>
                     <select id="sortSelect" onchange="render()" class="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-slate-400 outline-none cursor-pointer">
-                        <option value="merits">Sort: Merits</option>
-                        <option value="highest_power">Sort: Power</option>
-                        <option value="units_killed">Sort: Kills</option>
+                        <option value="merits">Sort By: Merits</option>
+                        <option value="highest_power">Sort By: Power</option>
+                        <option value="units_killed">Sort By: Kills</option>
                     </select>
                 </div>
                 
@@ -117,12 +117,12 @@ HTML_CONTENT = """
             </main>
 
             <section class="xl:col-span-3 space-y-6">
-                <div class="glass p-5 rounded-[1.5rem] shadow-xl mb-6">
-                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Managers</h3>
-                    <div id="teamNamesContainer" class="grid grid-cols-2 gap-2"></div>
+                <div class="glass p-5 rounded-[1.5rem] shadow-xl">
+                    <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Manager Controls</h3>
+                    <div id="teamNamesContainer" class="grid grid-cols-1 gap-2"></div>
                 </div>
 
-                <div id="rosterContainer" class="space-y-4"></div>
+                <div id="rosterContainer" class="space-y-6"></div>
             </section>
 
         </div>
@@ -151,7 +151,7 @@ HTML_CONTENT = """
                     const inputId = `name-${t.id}`;
                     if (!document.getElementById(inputId)) {
                         const wrapper = document.createElement('div');
-                        wrapper.innerHTML = `<input type="text" id="${inputId}" oninput="updateName(${t.id})" placeholder="Team ${i+1}" class="w-full bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-bold outline-none focus:border-white/20" style="color: ${COLORS[i % COLORS.length]}">`;
+                        wrapper.innerHTML = `<input type="text" id="${inputId}" oninput="updateName(${t.id})" placeholder="Manager ${i+1}" class="w-full bg-slate-900 border border-white/5 px-4 py-2 rounded-xl text-xs font-bold outline-none focus:border-white/20" style="color: ${COLORS[i % COLORS.length]}">`;
                         nameContainer.appendChild(wrapper);
                     }
                     const input = document.getElementById(inputId);
@@ -172,7 +172,7 @@ HTML_CONTENT = """
             await fetch('/api/draft', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({pIdx: pIdx, tId: tId}) });
             sync();
         }
-        async function resetDraft() { if(confirm("Reset Draft?")) { await fetch('/api/reset', {method: 'POST'}); window.location.reload(); } }
+        async function resetDraft() { if(confirm("Reset Draft Data?")) { await fetch('/api/reset', {method: 'POST'}); window.location.reload(); } }
 
         function render() {
             const grid = document.getElementById('grid');
@@ -190,10 +190,10 @@ HTML_CONTENT = """
             state.history.forEach(item => {
                 const color = COLORS[item.teamId % COLORS.length];
                 hist.innerHTML = `
-                    <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl border-l-2 mb-1" style="border-color: ${color}">
+                    <div class="flex items-center justify-between bg-white/5 p-3 rounded-2xl border-l-4 mb-2 shadow-inner" style="border-color: ${color}">
                         <div class="flex flex-col">
                             <span class="text-[8px] font-black uppercase text-slate-500">${item.teamName}</span>
-                            <span class="font-bold tracking-tight">${item.player}</span>
+                            <span class="text-sm font-bold tracking-tight">${item.player}</span>
                         </div>
                     </div>` + hist.innerHTML;
             });
@@ -206,37 +206,37 @@ HTML_CONTENT = """
 
             available.forEach((p) => {
                 const div = document.createElement('div');
-                div.className = 'player-card glass rounded-[1.5rem] shadow-xl relative overflow-hidden flex flex-col';
+                div.className = 'player-card glass rounded-[2rem] shadow-xl flex flex-col overflow-hidden';
                 div.innerHTML = `
-                    <div class="bg-black/30 p-3 text-center relative">
-                        <div class="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg tracking-widest">Merits: ${p.merits.toLocaleString()}</div>
-                        <h3 class="text-sm font-black uppercase tracking-tight text-white leading-tight mt-2 mx-4">${p.name}</h3>
+                    <div class="bg-black/40 p-3 text-center border-b border-white/5">
+                        <div class="text-[9px] font-black text-orange-400 mb-0.5 tracking-tighter uppercase">Rating: ${p.merits.toLocaleString()}</div>
+                        <h3 class="text-sm font-black uppercase tracking-tight text-white leading-tight truncate px-2">${p.name}</h3>
                     </div>
 
-                    <div class="p-3 flex-grow flex flex-col justify-between">
-                         <div class="grid grid-cols-2 gap-2 mb-3">
-                            <div class="bg-slate-900/40 p-2 rounded-lg text-center">
-                                <span class="stat-label text-slate-400 block">Pwr</span>
+                    <div class="p-3 flex-grow bg-slate-800/20">
+                         <div class="grid grid-cols-2 gap-1.5 mb-3">
+                            <div class="stat-box-inner bg-slate-900/40 p-2 rounded-xl text-center">
+                                <span class="stat-label block">Power</span>
                                 <span class="stat-val text-white">${(p.highest_power/1000000).toFixed(1)}M</span>
                             </div>
-                            <div class="bg-red-900/20 p-2 rounded-lg text-center border border-red-900/30">
-                                <span class="stat-label text-red-400 block">Kills</span>
-                                <span class="stat-val text-white">${(p.units_killed/1000000).toFixed(1)}M</span>
+                            <div class="stat-box-inner bg-red-900/10 p-2 rounded-xl text-center border border-red-900/10">
+                                <span class="stat-label text-red-400/80 block">Kills</span>
+                                <span class="stat-val text-white">${(p.units_killed/1000000).toFixed(0)}M</span>
                             </div>
-                            <div class="bg-emerald-900/20 p-2 rounded-lg text-center border border-emerald-900/30">
-                                <span class="stat-label text-emerald-400 block">Heals</span>
-                                <span class="stat-val text-white">${(p.units_healed/1000000).toFixed(1)}M</span>
+                            <div class="stat-box-inner bg-emerald-900/10 p-2 rounded-xl text-center border border-emerald-900/10">
+                                <span class="stat-label text-emerald-400/80 block">Heals</span>
+                                <span class="stat-val text-white">${(p.units_healed/1000000).toFixed(0)}M</span>
                             </div>
-                            <div class="bg-slate-900/40 p-2 rounded-lg text-center">
-                                <span class="stat-label text-slate-400 block">Dead</span>
+                            <div class="stat-box-inner bg-slate-900/40 p-2 rounded-xl text-center">
+                                <span class="stat-label block">Dead</span>
                                 <span class="stat-val text-slate-300">${(p.units_dead/1000000).toFixed(1)}M</span>
                             </div>
                          </div>
 
                         <button onclick="draft(${p.id}, ${turnInfo.teamId})" 
                                 style="background-color: ${turnColor};"
-                                class="w-full py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:brightness-125 transition">
-                            PICK
+                                class="w-full py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:brightness-125 transition">
+                            Confirm Pick
                         </button>
                     </div>
                 `;
@@ -244,17 +244,17 @@ HTML_CONTENT = """
             });
             document.getElementById('count').innerText = available.length;
 
-            const comparisonData = { merits: [], power: [], killed: [], healed: [] };
+            const comparisonData = { merits: [], killed: [] };
 
             state.teams.forEach((t, i) => {
-                let m = 0, p = 0, k = 0, h = 0;
+                let m = 0, k = 0;
                 let pickItems = t.picks.map(pid => {
                     const pl = players[pid];
-                    m += pl.merits; p += pl.highest_power; k += pl.units_killed; h += pl.units_healed;
+                    m += pl.merits; k += pl.units_killed;
                     return `
-                        <div class="flex items-center justify-between py-2 border-b border-white/5 text-[9px]">
-                            <span class="font-bold uppercase">${pl.name}</span>
-                            <span class="text-orange-400 font-black">${pl.merits.toLocaleString()}</span>
+                        <div class="flex items-center justify-between py-2 border-b border-white/5">
+                            <span class="text-[11px] font-bold uppercase tracking-tight truncate w-24">${pl.name}</span>
+                            <span class="text-orange-400 font-bold text-[10px]">${(pl.merits/1000000).toFixed(1)}M</span>
                         </div>`;
                 }).join('');
 
@@ -262,12 +262,20 @@ HTML_CONTENT = """
                 comparisonData.killed.push({val: k, color: COLORS[i % COLORS.length], name: t.name});
 
                 const col = document.createElement('div');
-                col.className = 'glass p-4 rounded-[1.2rem] shadow-xl relative overflow-hidden';
+                col.className = 'glass p-6 rounded-[2rem] shadow-2xl relative border-l-8';
+                col.style.borderLeftColor = COLORS[i % COLORS.length];
                 col.innerHTML = `
-                    <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
-                        <h3 class="text-xs font-black uppercase italic" style="color: ${COLORS[i % COLORS.length]}">${t.name}</h3>
-                        <div class="text-right">
-                             <p class="text-[10px] font-black font-mono leading-none">${m.toLocaleString()}</p>
+                    <div class="flex flex-col gap-1 mb-4">
+                        <h3 class="text-xl font-black uppercase italic leading-tight">${t.name}</h3>
+                        <div class="flex gap-4 mt-2 bg-black/20 p-2 rounded-xl">
+                            <div class="flex flex-col">
+                                <span class="text-[8px] font-black text-slate-500 uppercase">Total Merits</span>
+                                <span class="text-lg font-black font-mono leading-none text-orange-400">${m.toLocaleString()}</span>
+                            </div>
+                            <div class="flex flex-col border-l border-white/5 pl-4">
+                                <span class="text-[8px] font-black text-slate-500 uppercase">Team Kills</span>
+                                <span class="text-lg font-black font-mono leading-none text-red-500">${(k/1000000).toFixed(0)}M</span>
+                            </div>
                         </div>
                     </div>
                     <div class="space-y-0 text-[10px]">${pickItems}</div>
@@ -275,28 +283,36 @@ HTML_CONTENT = """
                 rosterCont.appendChild(col);
             });
 
-            renderStackedBars(comparisonData);
+            renderLeaderboard(comparisonData);
         }
 
-        function renderStackedBars(data) {
+        function renderLeaderboard(data) {
             const container = document.getElementById('comparison');
             container.innerHTML = '';
-            const buildBar = (label, stats) => {
+            
+            const buildSection = (title, stats) => {
                 const total = stats.reduce((acc, s) => acc + s.val, 0) || 1;
-                const bars = stats.map(s => {
+                const topTeam = [...stats].sort((a,b)=>b.val-a.val)[0];
+                
+                const barSegments = stats.map(s => {
                     const pct = (s.val / total * 100).toFixed(1);
                     return `<div style="width: ${pct}%; background-color: ${s.color};" class="stacked-bar" title="${s.name}"></div>`;
                 }).join('');
+
                 return `
-                <div>
-                    <div class="flex justify-between text-[7px] font-black uppercase text-slate-500 mb-2 tracking-widest">
-                        <span>${label}</span>
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-end">
+                        <span class="text-[10px] font-black text-white uppercase tracking-tighter italic">${title}</span>
+                        <span class="text-[9px] bg-slate-700/50 px-2 py-0.5 rounded text-orange-400 font-bold uppercase tracking-widest leading-none">Leader: ${topTeam.name}</span>
                     </div>
-                    <div class="flex w-full bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5 h-2">${bars}</div>
+                    <div class="flex w-full bg-slate-900/60 rounded-full overflow-hidden p-0.5 border border-white/5 h-5 shadow-2xl">
+                        ${barSegments}
+                    </div>
                 </div>`;
             };
-            container.innerHTML += buildBar('Merit Power', data.merits);
-            container.innerHTML += buildBar('Kill Distribution', data.killed);
+
+            container.innerHTML += buildSection('Merit Distribution', data.merits);
+            container.innerHTML += buildSection('Kill Pressure', data.killed);
         }
 
         setInterval(sync, 2000);
@@ -348,4 +364,5 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
 
