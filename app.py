@@ -74,13 +74,13 @@ HTML_CONTENT = """
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none">Scouting Room</h1>
+                    <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none">Broken Crown</h1>
                     <p class="text-slate-500 text-xs font-bold uppercase tracking-[0.3em] mt-1">Live Fantasy Draft Portal</p>
                 </div>
             </div>
 
             <div id="turnTicker" class="glass px-8 py-4 rounded-3xl border-2 flex items-center gap-6 shadow-2xl transition-colors duration-500">
-                <span class="text-xs font-black uppercase tracking-[0.4em] text-slate-400">On The Clock</span>
+                <span class="text-xs font-black uppercase tracking-[0.4em] text-slate-400">Next up</span>
                 <span id="turnName" class="text-2xl font-black uppercase italic tracking-tight">---</span>
             </div>
 
@@ -109,7 +109,7 @@ HTML_CONTENT = """
                     <h2 class="text-2xl font-black uppercase tracking-tighter italic">Prospect Pool <span class="text-orange-500" id="count">0</span></h2>
                     <div class="flex gap-4">
                         <select id="sortSelect" onchange="render()" class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-400 outline-none cursor-pointer">
-                            <option value="merits">Sort: Value</option>
+                            <option value="merits">Sort: Merits</option>
                             <option value="highest_power">Sort: Power</option>
                             <option value="units_killed">Sort: Kills</option>
                         </select>
@@ -214,7 +214,7 @@ HTML_CONTENT = """
                 div.className = 'player-card glass p-6 rounded-[2.5rem] shadow-2xl relative overflow-hidden';
                 div.innerHTML = `
                     <div class="text-center relative z-10">
-                        <div class="inline-block bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Value: ${p.merits.toLocaleString()}</div>
+                        <div class="inline-block bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Merits: ${p.merits.toLocaleString()}</div>
                         <h3 class="text-xl font-black uppercase tracking-tighter mb-6">${p.name}</h3>
                         
                         <div class="grid grid-cols-2 gap-3 mb-8">
@@ -360,3 +360,4 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
