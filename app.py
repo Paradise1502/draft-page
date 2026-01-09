@@ -50,7 +50,7 @@ HTML_CONTENT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Broken Crown</title>
+    <title>Broken Crown Fantasy Draft</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -72,7 +72,7 @@ HTML_CONTENT = """
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none">Scouting Room</h1>
+                    <h1 class="text-3xl font-black italic tracking-tighter uppercase leading-none">Broken Crown</h1>
                     <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-1">Live Fantasy Draft Portal</p>
                 </div>
             </div>
@@ -207,9 +207,9 @@ HTML_CONTENT = """
                 const div = document.createElement('div');
                 div.className = 'player-card glass p-4 rounded-[1.5rem] shadow-xl text-center flex flex-col justify-between';
                 div.innerHTML = `
-                    <div>
-                        <div class="text-[10px] font-black text-orange-500 mb-1">${p.merits.toLocaleString()}</div>
-                        <h3 class="text-sm font-black uppercase tracking-tight mb-4 truncate border-b border-white/5 pb-2">${p.name}</h3>
+                    <div class="text-center relative z-10">
+                        <div class="inline-block bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Value: ${p.merits.toLocaleString()}</div>
+                        <h3 class="text-xl font-black uppercase tracking-tighter mb-6">${p.name}</h3>
                         
                         <div class="grid grid-cols-2 gap-2 mb-4">
                             <div class="bg-white/5 p-2 rounded-xl">
@@ -337,3 +337,4 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
