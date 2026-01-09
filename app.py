@@ -304,3 +304,47 @@ HTML_CONTENT = """
     </script>
 </body>
 </html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_CONTENT, players_json=json.dumps(PLAYERS))
+
+@app.route('/api/state')
+def get_state():
+    return jsonify(state)
+
+@app.route('/api/add_team', methods=['POST'])
+def add_team():
+    new_id = len(state['teams'])
+    state['teams'].append({"id": new_id, "name": f"Team {new_id + 1}", "picks": []})
+    return jsonify({"success": True})
+
+@app.route('/api/names', methods=['POST'])
+def update_names():
+    data = request.json
+    t_id, t_name = data.get('id'), data.get('name')
+    for t in state['teams']:
+        if t['id'] == t_id: t['name'] = t_name
+    return jsonify({"success": True})
+
+@app.route('/api/draft', methods=['POST'])
+def draft_player():
+    data = request.json
+    p_idx, t_id = data.get('pIdx'), data.get('tId')
+    drafted = [p for t in state['teams'] for p in t['picks']]
+    if p_idx not in drafted:
+        state['teams'][t_id]['picks'].append(p_idx)
+        state['history'].append({"player": PLAYERS[p_idx]['name'], "teamName": state['teams'][t_id]['name'], "teamId": t_id})
+        state['turn'] += 1
+    return jsonify({"success": True})
+
+@app.route('/api/reset', methods=['POST'])
+def reset():
+    state['teams'] = [{"id": 0, "name": "Team 1", "picks": []}, {"id": 1, "name": "Team 2", "picks": []}]
+    state['history'], state['turn'] = [], 0
+    return jsonify({"success": True})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
