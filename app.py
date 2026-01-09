@@ -79,7 +79,7 @@ HTML_CONTENT = """
             </div>
 
             <div id="turnTicker" class="glass px-8 py-3 rounded-2xl border-2 flex items-center gap-6 shadow-2xl transition-colors duration-500">
-                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">On The Clock</span>
+                <span class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Next up</span>
                 <span id="turnName" class="text-xl font-black uppercase italic tracking-tight">---</span>
             </div>
 
@@ -209,7 +209,7 @@ HTML_CONTENT = """
                 div.className = 'player-card glass rounded-[1.5rem] shadow-xl relative overflow-hidden flex flex-col';
                 div.innerHTML = `
                     <div class="bg-black/30 p-3 text-center relative">
-                        <div class="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg tracking-widest">VALUE: ${p.merits.toLocaleString()}</div>
+                        <div class="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg tracking-widest">Merits: ${p.merits.toLocaleString()}</div>
                         <h3 class="text-sm font-black uppercase tracking-tight text-white leading-tight mt-2 mx-4">${p.name}</h3>
                     </div>
 
@@ -348,3 +348,4 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
