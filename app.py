@@ -50,16 +50,17 @@ HTML_CONTENT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Broken Crown Fantasy Draft</title>
+    <title>BC Fantasy Draft</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { background: #020617; color: #f8fafc; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
         .player-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .player-card:hover { transform: scale(1.02); border-color: rgba(249, 115, 22, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        .player-card:hover { transform: translateY(-3px); border-color: rgba(249, 115, 22, 0.5); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .stat-badge { font-family: monospace; }
+        .stat-label { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-val { font-family: monospace; font-weight: 700; font-size: 11px; }
         .stacked-bar { height: 12px; border-radius: 6px; transition: width 0.8s ease; }
     </style>
 </head>
@@ -98,7 +99,7 @@ HTML_CONTENT = """
 
                 <div class="glass p-5 rounded-[1.5rem] shadow-xl">
                     <h3 class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Pick Stream</h3>
-                    <div id="historyList" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide text-[10px]"></div>
+                    <div id="historyList" class="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide text-[10px]"></div>
                 </div>
             </aside>
 
@@ -205,29 +206,39 @@ HTML_CONTENT = """
 
             available.forEach((p) => {
                 const div = document.createElement('div');
-                div.className = 'player-card glass p-4 rounded-[1.5rem] shadow-xl text-center flex flex-col justify-between';
+                div.className = 'player-card glass rounded-[1.5rem] shadow-xl relative overflow-hidden flex flex-col';
                 div.innerHTML = `
-                    <div class="text-center relative z-10">
-                        <div class="inline-block bg-orange-500/10 text-orange-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Value: ${p.merits.toLocaleString()}</div>
-                        <h3 class="text-xl font-black uppercase tracking-tighter mb-6">${p.name}</h3>
-                        
-                        <div class="grid grid-cols-2 gap-2 mb-4">
-                            <div class="bg-white/5 p-2 rounded-xl">
-                                <p class="text-[7px] font-black uppercase text-slate-500">Pwr</p>
-                                <p class="text-[10px] font-black">${(p.highest_power/1000000).toFixed(1)}M</p>
-                            </div>
-                            <div class="bg-white/5 p-2 rounded-xl">
-                                <p class="text-[7px] font-black uppercase text-slate-500">Kills</p>
-                                <p class="text-[10px] font-black text-red-400">${(p.units_killed/1000000).toFixed(0)}M</p>
-                            </div>
-                        </div>
+                    <div class="bg-black/30 p-3 text-center relative">
+                        <div class="absolute top-0 right-0 bg-orange-500/20 text-orange-400 text-[9px] font-bold px-2 py-0.5 rounded-bl-lg tracking-widest">VALUE: ${p.merits.toLocaleString()}</div>
+                        <h3 class="text-sm font-black uppercase tracking-tight text-white leading-tight mt-2 mx-4">${p.name}</h3>
                     </div>
 
-                    <button onclick="draft(${p.id}, ${turnInfo.teamId})" 
-                            style="background-color: ${turnColor};"
-                            class="w-full py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-xl hover:brightness-125 transition">
-                        Pick
-                    </button>
+                    <div class="p-3 flex-grow flex flex-col justify-between">
+                         <div class="grid grid-cols-2 gap-2 mb-3">
+                            <div class="bg-slate-900/40 p-2 rounded-lg text-center">
+                                <span class="stat-label text-slate-400 block">Pwr</span>
+                                <span class="stat-val text-white">${(p.highest_power/1000000).toFixed(1)}M</span>
+                            </div>
+                            <div class="bg-red-900/20 p-2 rounded-lg text-center border border-red-900/30">
+                                <span class="stat-label text-red-400 block">Kills</span>
+                                <span class="stat-val text-white">${(p.units_killed/1000000).toFixed(1)}M</span>
+                            </div>
+                            <div class="bg-emerald-900/20 p-2 rounded-lg text-center border border-emerald-900/30">
+                                <span class="stat-label text-emerald-400 block">Heals</span>
+                                <span class="stat-val text-white">${(p.units_healed/1000000).toFixed(1)}M</span>
+                            </div>
+                            <div class="bg-slate-900/40 p-2 rounded-lg text-center">
+                                <span class="stat-label text-slate-400 block">Dead</span>
+                                <span class="stat-val text-slate-300">${(p.units_dead/1000000).toFixed(1)}M</span>
+                            </div>
+                         </div>
+
+                        <button onclick="draft(${p.id}, ${turnInfo.teamId})" 
+                                style="background-color: ${turnColor};"
+                                class="w-full py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:brightness-125 transition">
+                            PICK
+                        </button>
+                    </div>
                 `;
                 grid.appendChild(div);
             });
@@ -293,48 +304,3 @@ HTML_CONTENT = """
     </script>
 </body>
 </html>
-"""
-
-@app.route('/')
-def index():
-    return render_template_string(HTML_CONTENT, players_json=json.dumps(PLAYERS))
-
-@app.route('/api/state')
-def get_state():
-    return jsonify(state)
-
-@app.route('/api/add_team', methods=['POST'])
-def add_team():
-    new_id = len(state['teams'])
-    state['teams'].append({"id": new_id, "name": f"Team {new_id + 1}", "picks": []})
-    return jsonify({"success": True})
-
-@app.route('/api/names', methods=['POST'])
-def update_names():
-    data = request.json
-    t_id, t_name = data.get('id'), data.get('name')
-    for t in state['teams']:
-        if t['id'] == t_id: t['name'] = t_name
-    return jsonify({"success": True})
-
-@app.route('/api/draft', methods=['POST'])
-def draft_player():
-    data = request.json
-    p_idx, t_id = data.get('pIdx'), data.get('tId')
-    drafted = [p for t in state['teams'] for p in t['picks']]
-    if p_idx not in drafted:
-        state['teams'][t_id]['picks'].append(p_idx)
-        state['history'].append({"player": PLAYERS[p_idx]['name'], "teamName": state['teams'][t_id]['name'], "teamId": t_id})
-        state['turn'] += 1
-    return jsonify({"success": True})
-
-@app.route('/api/reset', methods=['POST'])
-def reset():
-    state['teams'] = [{"id": 0, "name": "Team 1", "picks": []}, {"id": 1, "name": "Team 2", "picks": []}]
-    state['history'], state['turn'] = [], 0
-    return jsonify({"success": True})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-
