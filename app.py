@@ -79,7 +79,7 @@ HTML_CONTENT = """
             </div>
 
             <div id="turnTicker" class="glass px-10 py-4 rounded-3xl border-2 flex flex-col items-center gap-1 shadow-2xl transition-colors duration-500">
-                <span class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">On The Clock</span>
+                <span class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Next Up</span>
                 <span id="turnName" class="text-2xl font-black uppercase italic tracking-tight">---</span>
             </div>
 
@@ -209,7 +209,7 @@ HTML_CONTENT = """
                 div.className = 'player-card glass rounded-[2rem] shadow-xl flex flex-col overflow-hidden';
                 div.innerHTML = `
                     <div class="bg-black/40 p-3 text-center border-b border-white/5">
-                        <div class="text-[9px] font-black text-orange-400 mb-0.5 tracking-tighter uppercase">Rating: ${p.merits.toLocaleString()}</div>
+                        <div class="text-[9px] font-black text-orange-400 mb-0.5 tracking-tighter uppercase">Merits: ${p.merits.toLocaleString()}</div>
                         <h3 class="text-sm font-black uppercase tracking-tight text-white leading-tight truncate px-2">${p.name}</h3>
                     </div>
 
@@ -260,7 +260,7 @@ HTML_CONTENT = """
 
                 comparisonData.merits.push({val: m, color: COLORS[i % COLORS.length], name: t.name});
                 comparisonData.killed.push({val: k, color: COLORS[i % COLORS.length], name: t.name});
-
+            
                 const col = document.createElement('div');
                 col.className = 'glass p-6 rounded-[2rem] shadow-2xl relative border-l-8';
                 col.style.borderLeftColor = COLORS[i % COLORS.length];
@@ -312,7 +312,7 @@ HTML_CONTENT = """
             };
 
             container.innerHTML += buildSection('Merit Distribution', data.merits);
-            container.innerHTML += buildSection('Kill Pressure', data.killed);
+            container.innerHTML += buildSection('Kills Distribution', data.killed);
         }
 
         setInterval(sync, 2000);
@@ -364,5 +364,6 @@ def reset():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
 
 
